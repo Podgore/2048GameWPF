@@ -13,5 +13,6 @@ namespace Normal2048
     /// </summary>
     public partial class App : Application
     {
+
     }
 }

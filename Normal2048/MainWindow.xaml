@@ -6,6 +6,19 @@
         xmlns:local="clr-namespace:Normal2048"
         mc:Ignorable="d"
         Title="MainWindow" Height="1000" Width="700">
+
+    <Window.Resources>
+        <Style x:Key="TileStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="5" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Width" Value="100" />
+            <Setter Property="Height" Value="100" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="24" />
+        </Style>
+    </Window.Resources>
+
     <Grid x:Name="MainGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="0.45*"/>
@@ -45,6 +58,7 @@
                     <Setter Property="Margin" Value="5"/>
                 </Style>
             </Grid.Resources>
+            
 
             <Grid Grid.Row="0" >
             </Grid>

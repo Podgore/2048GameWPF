@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -17,16 +18,18 @@ namespace Normal2048.Models
         private int column;
 
 
-        public int Row {
+        public int Row
+        {
             get => row;
-            set 
+            set
             {
                 row = value;
                 OnPropertyChanged(nameof(Row));
             }
         }
 
-        public int Column { 
+        public int Column
+        {
             get => column;
             set
             {
@@ -54,7 +57,11 @@ namespace Normal2048.Models
                 OnPropertyChanged(nameof(IsOccupied));
             }
         }
-
+        public bool IsMerged 
+        { 
+            get; 
+            set; 
+        }
         public Cell(int row, int column)
         {
             Row = row;
@@ -79,12 +86,19 @@ namespace Normal2048.Models
                    Row == cell.Row &&
                    Column == cell.Column &&
                    Value == cell.Value &&
-                   IsOccupied == cell.IsOccupied;
+                   IsOccupied == cell.IsOccupied
+                   ;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Row, Column, Value, IsOccupied);
+            return HashCode.Combine(Row, Column);
         }
+
+        public override string ToString()
+        {
+            return $"{Value} at ({Row}:{Column})";
+        }
+
     }
 }

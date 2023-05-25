@@ -32,6 +32,10 @@ namespace Normal2048.Models
                 }
             }
         }
+        public Cell GetCell(int row, int column)
+        {
+            return _cells[row, column];
+        }
 
         public Field(int size)
         {
@@ -96,9 +100,11 @@ namespace Normal2048.Models
                     {
                         for (int row = 1; row < Size; row++)
                         {
-                            if (MoveCell(_cells[row, column], _cells[row - 1, column]))
+                            int currentRow = row;
+                            while (currentRow > 0 && MoveCell(_cells[currentRow, column], _cells[currentRow - 1, column]))
                             {
                                 moved = true;
+                                currentRow--;
                             }
                         }
                     }
@@ -109,9 +115,11 @@ namespace Normal2048.Models
                     {
                         for (int row = Size - 2; row >= 0; row--)
                         {
-                            if (MoveCell(_cells[row, column], _cells[row + 1, column]))
+                            int currentRow = row;
+                            while (currentRow < Size - 1 && MoveCell(_cells[currentRow, column], _cells[currentRow + 1, column]))
                             {
                                 moved = true;
+                                currentRow++;
                             }
                         }
                     }
@@ -121,9 +129,11 @@ namespace Normal2048.Models
                     {
                         for (int column = 1; column < Size; column++)
                         {
-                            if (MoveCell(_cells[row, column], _cells[row, column - 1]))
+                            int currentColumn = column;
+                            while (currentColumn > 0 && MoveCell(_cells[row, currentColumn], _cells[row, currentColumn - 1]))
                             {
                                 moved = true;
+                                currentColumn--;
                             }
                         }
                     }
@@ -134,9 +144,11 @@ namespace Normal2048.Models
                     {
                         for (int column = Size - 2; column >= 0; column--)
                         {
-                            if (MoveCell(_cells[row, column], _cells[row, column + 1]))
+                            int currentColumn = column;
+                            while (currentColumn < Size - 1 && MoveCell(_cells[row, currentColumn], _cells[row, currentColumn + 1]))
                             {
                                 moved = true;
+                                currentColumn++;
                             }
                         }
                     }
@@ -160,10 +172,17 @@ namespace Normal2048.Models
                 return false;
 
             if (target.IsEmpty())
-                return MoveFreely(source, target);
+            {    
+                MoveFreely(source, target);
+                return true;
+            }
 
             if (source.Value == target.Value && !target.IsEmpty())
-                return Merge(source, target);
+            {
+                
+                Merge(source, target);
+                return true;
+            }
 
             return false;
         }
@@ -177,14 +196,13 @@ namespace Normal2048.Models
             return true;
         }
 
-        private bool Merge(Cell source, Cell target)
+        private void Merge(Cell source, Cell target)
         {
             target.Value *= 2;
             target.IsOccupied = true;
             source.Value = 0;
             source.IsOccupied = false;
             Score += target.Value;
-            return true;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -218,5 +236,6 @@ public enum Direction
     Up,
     Down,
     Left,
-    Right
+    Right,
+    None
 }
