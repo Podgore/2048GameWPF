@@ -14,15 +14,17 @@ using System.ComponentModel;
 using System.Data.Common;
 using System.Xml.Linq;
 using System.Collections;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Normal2048
 {
 
     public partial class MainWindow : Window
     {
-        private readonly Field _field;
-        private readonly List<Grid> _grids;
-        private readonly Dictionary<Cell, TextBlock?> _cellTextBlockMap = new Dictionary<Cell, TextBlock?>();
+        private Stack<Field> _undoStack = new Stack<Field>();
+        private /*readonly*/ Field _field;
+        private /*readonly*/ List<Grid> _grids;
+        private /*readonly*/ Dictionary<Cell, TextBlock?> _cellTextBlockMap = new Dictionary<Cell, TextBlock?>();
         private Dictionary<Cell, Rectangle> _cellRectangleMap = new Dictionary<Cell, Rectangle>();
 
         public MainWindow()
@@ -50,8 +52,6 @@ namespace Normal2048
                 }
             }
 
-
-
             _cellTextBlockMap = cells.Zip(_grids).ToDictionary(
            tuple => tuple.First,
            tuple => tuple.Second.Children.OfType<TextBlock>().FirstOrDefault());
@@ -61,8 +61,6 @@ namespace Normal2048
                 cell.PropertyChanged += Cell_PropertyChanged!;
             }
             KeyDown += MainWindow_KeyDown;
-           
-
         }
 
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
@@ -79,44 +77,43 @@ namespace Normal2048
             if (direction != Direction.None)
             {
                 _field.Move(direction);
-                UpdateRectanglesPositions();
+                if (_field.IsGameOver())
+                {
+                    
+                    MessageBox.Show("You lost( Better luck next time");
+                    System.Windows.Application.Current.Shutdown();
+                }
             }
         }
-        private void UpdateRectanglesPositions()
-        {
-            //foreach (var cell in _field.ToList())
-            //{
-                
-                
-            //    var rectangle = _cellRectangleMap[cell];
-            //    var row = cell.Row;
-            //    var column = cell.Column;
 
-            //    var newPosition = new Point(column * rectangle.ActualWidth, row * rectangle.ActualHeight);
-
-
-            //    var animation = new DoubleAnimation
-            //    {
-            //        To = newPosition.X,
-            //        Duration = TimeSpan.FromMilliseconds(200)
-            //    };
-                
-            //    Canvas.SetLeft(rectangle, newPosition.X);
-            //    rectangle.BeginAnimation(Canvas.LeftProperty, animation);
-
-            //    Canvas.SetTop(rectangle, newPosition.Y);
-            //    rectangle.BeginAnimation(Canvas.TopProperty, animation);
-            //}
-        }
 
         private void Cell_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             var cell = (Cell)sender;
-
-            var textBlock = _cellTextBlockMap[cell];
-            textBlock.Text = cell.Value.ToString();
             
+            var textBlock = _cellTextBlockMap[cell];
 
+   
+            textBlock!.Text = cell.Value == 0 ? "" : cell.Value.ToString();
+
+            var rectangle = _cellRectangleMap[cell];
+
+            rectangle.Fill = GetTileColor(cell.Value);
+
+            CalculateScore();
+
+            if (cell.Value == 2048)
+            {
+                MessageBox.Show("Congrats!!! You won!");
+                System.Windows.Application.Current.Shutdown();
+            }
+            
+            
+        }
+        public void CalculateScore()
+        {
+            int score = _field.Score;
+            ScoreTextBlock.Text = $"Score: {score}";
         }
 
         private Brush GetTileColor(int value)
@@ -134,16 +131,17 @@ namespace Normal2048
                 512 => Brushes.DarkGreen,
                 1024 => Brushes.LightBlue,
                 2048 => Brushes.Blue,
-                _ => Brushes.WhiteSmoke,
+                0 => Brushes.WhiteSmoke,
+                _ => throw new NotImplementedException(),
             };
         }
 
         private void AddTileToGrid(Grid grid, Cell cell)
         {
+            
             Rectangle rectangle = new Rectangle()
             {
-                Fill = GetTileColor(cell.Value),
-                Opacity = cell.IsOccupied ? 1 : 0
+                Fill = GetTileColor(cell.Value),         
             };
 
             Grid.SetRow(rectangle, cell.Row);
@@ -155,28 +153,50 @@ namespace Normal2048
             
             TextBlock element = new TextBlock()
             {
-                Style = (Style)FindResource("TileStyle"),
                 Foreground = Brushes.Black,
-                FontSize = 15,
-                Text = cell.Value.ToString()
+                FontSize = 40,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                FontWeight = FontWeights.UltraBlack
+            };
 
-        };
-
-            
-               
-            
-                
+            if (cell.Value != 0)
+            {
+                element.Text = cell.Value.ToString();
+            }
 
             Grid.SetRow(element, cell.Row);
             Grid.SetColumn(element, cell.Column);
 
             grid.Children.Add(element);
 
-                
-
             _cellTextBlockMap[cell] = element;
             
         }
-    }
-    
+        private void NewGame_Click(object sender, RoutedEventArgs e)
+        {
+            string exePath = Environment.ProcessPath!;
+
+            System.Diagnostics.Process.Start(exePath);
+            System.Windows.Application.Current.Shutdown();
+        }
+
+        private Direction GetOppositeDirection(Direction direction)
+        {
+            return direction switch
+            {
+                Direction.Up => Direction.Down,
+                Direction.Down => Direction.Up,
+                Direction.Left => Direction.Right,
+                Direction.Right => Direction.Left,
+                _ => Direction.None
+            };
+        }
+
+        private void UndoMove_Click(object sender, RoutedEventArgs e)
+        {
+            
+        }
+
+    } 
 }

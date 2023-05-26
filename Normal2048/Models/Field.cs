@@ -1,13 +1,21 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Windows;
+using System.Windows.Input;
 using System.Windows.Controls;
-using System.Windows.Navigation;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using System.Reflection;
+using System.Windows.Ink;
+using System.Collections.Generic;
+using System;
+using System.Windows.Media.Animation;
+using Normal2048.Models;
+using System.Linq;
+using System.ComponentModel;
+using System.Data.Common;
+using System.Xml.Linq;
+using System.Collections;
+using static System.Net.Mime.MediaTypeNames;
+using System.Runtime.CompilerServices;
 
 namespace Normal2048.Models
 {
@@ -203,6 +211,54 @@ namespace Normal2048.Models
             source.Value = 0;
             source.IsOccupied = false;
             Score += target.Value;
+            
+        }
+        public bool IsGameOver()
+        {
+            
+            int emptyCells = 0;
+            foreach (var cell in _cells)
+            {
+                if (cell.IsEmpty())
+                {
+                    emptyCells++;
+                    if (emptyCells >= 1)
+                    {
+                        return false;
+                    }
+                }
+            }
+            if(emptyCells == 0)
+            {
+                for (int row = 0; row < Size; row++)
+                {
+                    for (int column = 0; column < Size; column++)
+                    {
+                        var currentCell = _cells[row, column];
+
+                        if (row > 0 && currentCell.Value == _cells[row - 1, column].Value)
+                        {
+                            return false;
+                        }
+
+                        if (row < Size - 1 && currentCell.Value == _cells[row + 1, column].Value)
+                        {
+                            return false;
+                        }
+
+                        if (column > 0 && currentCell.Value == _cells[row, column - 1].Value)
+                        {
+                            return false;
+                        }
+
+                        if (column < Size - 1 && currentCell.Value == _cells[row, column + 1].Value)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -227,6 +283,7 @@ namespace Normal2048.Models
         {
             return GetEnumerator();
         }
+
     }
 }
 
