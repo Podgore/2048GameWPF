@@ -16,6 +16,9 @@ using System.Xml.Linq;
 using System.Collections;
 using static System.Net.Mime.MediaTypeNames;
 using System.Runtime.CompilerServices;
+using System.Drawing;
+using System.Security.Policy;
+using System.Windows.Documents;
 
 namespace Normal2048.Models
 {
@@ -23,8 +26,10 @@ namespace Normal2048.Models
     {
         private readonly Random _random = new();
 
-        private readonly Cell[,] _cells;
+        public Cell[,] _cells;
         private int score;
+        public Cell[,] _previous;
+        private List<ICommand> _commandList = new List<ICommand>();
 
         public int Size { get; }
 
@@ -44,6 +49,7 @@ namespace Normal2048.Models
         {
             return _cells[row, column];
         }
+        public Cell[,] Cells => _cells;
 
         public Field(int size)
         {
@@ -60,6 +66,7 @@ namespace Normal2048.Models
             AddRandomValue();
             AddRandomValue();
         }
+
 
         private void AddRandomValue()
         {
@@ -171,10 +178,54 @@ namespace Normal2048.Models
             return moved;
 
         }
+        public bool CanMove(Direction direction)
+        {
+            var current = CopyFieldState();
 
+            Move(direction);
 
+            bool canMove = !IsFieldStateEqual(current, _cells);
 
-        private bool MoveCell(Cell source, Cell target)
+            _cells = current;
+
+            return canMove;
+        }
+
+        private bool IsFieldStateEqual(Cell[,] state1, Cell[,] state2)
+        {
+            for (int row = 0; row < Size; row++)
+            {
+                for (int column = 0; column < Size; column++)
+                {
+                    if (state1[row, column].Value != state2[row, column].Value ||
+                        state1[row, column].IsOccupied != state2[row, column].IsOccupied)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+       
+        public Cell[,] CopyFieldState()
+        {
+            Cell[,] copy = new Cell[Size, Size];
+            for (int row = 0; row < Size; row++)
+            {
+                for (int column = 0; column < Size; column++)
+                {
+                    copy[row, column] = new Cell(row, column)
+                    {
+                        Value = _cells[row, column].Value,
+                        IsOccupied = _cells[row, column].IsOccupied
+                    };
+                }
+            }
+            return copy;
+        }
+
+        public bool MoveCell(Cell source, Cell target)
         {
             if (source.IsEmpty())
                 return false;
@@ -211,8 +262,10 @@ namespace Normal2048.Models
             source.Value = 0;
             source.IsOccupied = false;
             Score += target.Value;
-            
+
         }
+        
+
         public bool IsGameOver()
         {
             
@@ -260,7 +313,7 @@ namespace Normal2048.Models
             }
             return true;
         }
-
+      
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public void OnPropertyChanged([CallerMemberName] string? propName = null)
@@ -268,7 +321,7 @@ namespace Normal2048.Models
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
         }
 
-        IEnumerator<Cell> IEnumerable<Cell>.GetEnumerator()
+        public IEnumerator<Cell> GetEnumerator()
         {
             for (int i = 0; i < Size; i++)
             {
@@ -279,11 +332,10 @@ namespace Normal2048.Models
             }
         }
 
-        public IEnumerator GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
-
     }
 }
 

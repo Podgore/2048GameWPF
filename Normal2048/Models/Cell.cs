@@ -57,15 +57,18 @@ namespace Normal2048.Models
                 OnPropertyChanged(nameof(IsOccupied));
             }
         }
-        public bool IsMerged 
-        { 
-            get; 
-            set; 
-        }
+
+       
+
         public Cell(int row, int column)
         {
             Row = row;
             Column = column;
+        }
+
+        public Cell(int value)
+        {
+            Value = value;
         }
 
         public bool IsEmpty()

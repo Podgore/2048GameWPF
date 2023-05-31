@@ -15,17 +15,18 @@ using System.Data.Common;
 using System.Xml.Linq;
 using System.Collections;
 using static System.Net.Mime.MediaTypeNames;
+using System.Threading.Tasks;
+using System.DirectoryServices;
 
 namespace Normal2048
 {
 
     public partial class MainWindow : Window
     {
-        private Stack<Field> _undoStack = new Stack<Field>();
         private /*readonly*/ Field _field;
         private /*readonly*/ List<Grid> _grids;
         private /*readonly*/ Dictionary<Cell, TextBlock?> _cellTextBlockMap = new Dictionary<Cell, TextBlock?>();
-        private Dictionary<Cell, Rectangle> _cellRectangleMap = new Dictionary<Cell, Rectangle>();
+        private Dictionary<Cell, Rectangle> _cellRectangleMap = new Dictionary<Cell, Rectangle>(); 
 
         public MainWindow()
         {
@@ -76,19 +77,25 @@ namespace Normal2048
 
             if (direction != Direction.None)
             {
-                _field.Move(direction);
+                _field.Move(direction);               
                 if (_field.IsGameOver())
                 {
-                    
-                    MessageBox.Show("You lost( Better luck next time");
-                    System.Windows.Application.Current.Shutdown();
+                    var customMessageBox = new CustomMessageBox("You lost");
+                    if (customMessageBox.ShowDialog() == true)
+                    {
+                        NewGame_Click(null, null);
+                    }
+                    else
+                    {
+                        Close_Click(null, null);
+                    }
                 }
             }
         }
 
-
         private void Cell_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
+
             var cell = (Cell)sender;
             
             var textBlock = _cellTextBlockMap[cell];
@@ -173,30 +180,27 @@ namespace Normal2048
             _cellTextBlockMap[cell] = element;
             
         }
-        private void NewGame_Click(object sender, RoutedEventArgs e)
+        
+
+        private void NewGame_Click(object? sender, RoutedEventArgs? e)
         {
             string exePath = Environment.ProcessPath!;
 
             System.Diagnostics.Process.Start(exePath);
             System.Windows.Application.Current.Shutdown();
         }
-
-        private Direction GetOppositeDirection(Direction direction)
+        private void Close_Click(object? value1, object? value2)
         {
-            return direction switch
-            {
-                Direction.Up => Direction.Down,
-                Direction.Down => Direction.Up,
-                Direction.Left => Direction.Right,
-                Direction.Right => Direction.Left,
-                _ => Direction.None
-            };
+            System.Windows.Application.Current.Shutdown();
         }
 
         private void UndoMove_Click(object sender, RoutedEventArgs e)
         {
-            
-        }
 
-    } 
+        }
+        private void BotSolve_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+    }
 }
