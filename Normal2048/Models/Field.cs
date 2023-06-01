@@ -19,6 +19,7 @@ using System.Runtime.CompilerServices;
 using System.Drawing;
 using System.Security.Policy;
 using System.Windows.Documents;
+using System.Threading.Tasks;
 
 namespace Normal2048.Models
 {
@@ -29,9 +30,10 @@ namespace Normal2048.Models
         public Cell[,] _cells;
         private int score;
         public Cell[,] _previous;
-        private List<ICommand> _commandList = new List<ICommand>();
+        private Field _field;
 
-        public int Size { get; }
+
+        public int Size { get; set; }
 
         public int Score
         {
@@ -230,8 +232,11 @@ namespace Normal2048.Models
             if (source.IsEmpty())
                 return false;
 
+           
+
             if (target.IsEmpty())
-            {    
+            {
+                
                 MoveFreely(source, target);
                 return true;
             }
@@ -264,7 +269,17 @@ namespace Normal2048.Models
             Score += target.Value;
 
         }
-        
+        public void ReturnLastMove(Cell[,]_previous)
+        {
+            for (int row = 0; row < Size; row++)
+            {
+                for (int column = 0; column < Size; column++)
+                {
+                    _cells[row, column].Value = _previous[row, column].Value;
+                    _cells[row, column].IsOccupied = _previous[row, column].IsOccupied;
+                }
+            }
+        }
 
         public bool IsGameOver()
         {
@@ -313,7 +328,227 @@ namespace Normal2048.Models
             }
             return true;
         }
-      
+        public Direction FindBestMove(Field field)
+        {
+            Direction bestMove = Direction.None;
+            int bestScore = int.MinValue;
+            Cell[,] originalState = field.CopyFieldState();
+            int currentScore = field.Score;
+            foreach (Direction direction in Enum.GetValues(typeof(Direction)))
+            {
+                if (direction != Direction.None)
+                {
+                    if (field.Move(direction))
+                    {
+
+
+                        int recursiveScore = CalculateScore(field, 3); // Рекурсивно оцениваем счет на 3 хода вперед
+
+                        if (recursiveScore > bestScore)
+                        {
+                            bestScore = recursiveScore;
+                            bestMove = direction;
+                        }
+
+                        field.ReturnLastMove(originalState);
+                        // Возвращаем поле в исходное состояние
+                    }
+                }
+            }
+            field.Score = currentScore;
+
+            return bestMove;
+        }
+
+        private int CalculateScore(Field field, int depth)
+        {
+            if (depth == 0 || field.IsGameOver())
+            {
+                // Оцените текущее состояние игрового поля и верните счет
+                return ScoreFunction(field);
+            }
+
+            int bestScore = int.MinValue;
+
+            foreach (Direction direction in Enum.GetValues(typeof(Direction)))
+            {
+                if (direction != Direction.None)
+                {
+                    Field clonedField = field;
+                    int currentScore = clonedField.Score;
+                    if (clonedField.Move(direction))
+                    {
+                        // Сохраняем текущий счет
+
+                        int recursiveScore = CalculateScore(clonedField, depth - 1);
+
+                        if (recursiveScore > bestScore)
+                        {
+                            bestScore = recursiveScore;
+                        }
+
+                        clonedField.ReturnLastMove(field.Cells);
+
+                    }
+                    clonedField.Score = currentScore;
+                    clonedField.ReturnLastMove(field.Cells); // Возвращаем поле в исходное состояние после рекурсивного вызова
+                }
+            }
+
+            return bestScore;
+        }
+        private int ScoreFunction(Field field)
+        {
+            int score = 0;
+
+            // Оценка на основе рядом расположенных одинаковых плиток
+            score += ScoreBasedOnAdjacentTiles(field);
+
+            // Оценка на основе общего счета игры
+            score += field.Score;
+
+            // Оценка на основе расположения больших плиток
+            score += ScoreBasedOnTilePositions(field);
+
+            return score;
+        }
+
+        private int ScoreBasedOnAdjacentTiles(Field field)
+        {
+            int score = 0;
+
+            for (int row = 0; row < field.Size; row++)
+            {
+                for (int col = 0; col < field.Size; col++)
+                {
+                    Cell currentTile = _cells[row, col];
+
+                    if (currentTile != null)
+                    {
+                        // Проверяем плитки сверху, снизу, слева и справа
+                        Cell? topTile = null;
+                        if (row - 1 >= 0)
+                        {
+                            topTile = _cells[row - 1, col];
+                        }
+                        else
+                        {
+                            // Если текущая плитка на верхнем краю поля, проверяем плитку за пустой плиткой
+                            topTile = _cells[row + 1, col];
+                        }
+
+                        Cell? bottomTile = null;
+                        if (row + 1 < 4)
+                        {
+                            bottomTile = _cells[row + 1, col];
+                        }
+                        else
+                        {
+                            // Если текущая плитка на нижнем краю поля, проверяем плитку за пустой плиткой
+                            bottomTile = _cells[row - 1, col];
+                        }
+
+                        Cell? leftTile = null;
+                        if (col - 1 >= 0)
+                        {
+                            leftTile = _cells[row, col - 1];
+                        }
+                        else
+                        {
+                            // Если текущая плитка на левом краю поля, проверяем плитку за пустой плиткой
+                            leftTile = _cells[row, col + 1];
+                        }
+
+                        Cell? rightTile = null;
+                        if (col + 1 < 4)
+                        {
+                            rightTile = _cells[row, col + 1];
+                        }
+                        else
+                        {
+                            // Если текущая плитка на правом краю поля, проверяем плитку за пустой плиткой
+                            rightTile = _cells[row, col - 1];
+                        }
+
+                        if (topTile != null && topTile.Value == currentTile.Value)
+                        {
+                            score += currentTile.Value;
+                        }
+
+                        if (bottomTile != null && bottomTile.Value == currentTile.Value)
+                        {
+                            score += currentTile.Value;
+                        }
+
+                        if (leftTile != null && leftTile.Value == currentTile.Value)
+                        {
+                            score += currentTile.Value;
+                        }
+
+                        if (rightTile != null && rightTile.Value == currentTile.Value)
+                        {
+                            score += currentTile.Value;
+                        }
+                    }
+                }
+            }
+
+            return score;
+        }
+
+
+        private int ScoreBasedOnTilePositions(Field field)
+        {
+            int score = 0;
+
+            int largestTileValue = 0;
+
+            for (int row = 0; row < field.Size; row++)
+            {
+                for (int col = 0; col < field.Size; col++)
+                {
+                    Cell currentTile = _cells[row, col];
+
+                    if (currentTile != null)
+                    {
+                        if (currentTile.Value > largestTileValue)
+                        {
+                            largestTileValue = currentTile.Value;
+                        }
+                    }
+                }
+            }
+
+            for (int row = 0; row < field.Size; row++)
+            {
+                for (int col = 0; col < field.Size; col++)
+                {
+                    Cell currentTile = _cells[row, col];
+
+                    if (currentTile != null)
+                    {
+                        int positionBonus = 0;
+
+                        if (currentTile.Value == largestTileValue)
+                        {
+                            positionBonus = (field.Size - row) * field.Size + (field.Size - col); // Больший бонус для самой большой плитки в верхнем левом углу
+                        }
+                        else
+                        {
+                            int distanceFromLargestTile = Math.Abs(row - (field.Size - 1)) + Math.Abs(col - (field.Size - 1));
+                            positionBonus = distanceFromLargestTile * field.Size + (field.Size - col); // Бонус по расстоянию от самой большой плитки
+                        }
+
+                        score += currentTile.Value + positionBonus;
+                    }
+                }
+            }
+
+            return score;
+        }
+
+
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public void OnPropertyChanged([CallerMemberName] string? propName = null)

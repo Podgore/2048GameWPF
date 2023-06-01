@@ -77,6 +77,7 @@ namespace Normal2048
 
             if (direction != Direction.None)
             {
+                _field._previous = _field.CopyFieldState();
                 _field.Move(direction);               
                 if (_field.IsGameOver())
                 {
@@ -196,11 +197,18 @@ namespace Normal2048
 
         private void UndoMove_Click(object sender, RoutedEventArgs e)
         {
+            _field.ReturnLastMove(_field._previous);
 
         }
-        private void BotSolve_Click(object sender, RoutedEventArgs e)
+        private async void BotSolve_Click(object sender, RoutedEventArgs e)
         {
-
+            while (!_field.IsGameOver())
+            {
+                var bestMove = _field.FindBestMove(_field);
+                _field.Move(bestMove);
+                await Task.Delay(1);
+            }
+            
         }
     }
 }
