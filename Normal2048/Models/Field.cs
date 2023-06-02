@@ -3,7 +3,6 @@ using System;
 using System.ComponentModel;
 using System.Collections;
 using System.Runtime.CompilerServices;
-using Normal2048.Helper;
 using System.Linq;
 
 namespace Normal2048.Models
@@ -12,10 +11,9 @@ namespace Normal2048.Models
     {
         private readonly Random _random = new();
 
-        public Cell[,] _cells;
+        private Cell[,] _cells;
         private int score;
-        public Cell[,] _previous;
-        private Field _field;
+        private Cell[,] _previous;
 
 
         public int Size { get; set; }
@@ -36,6 +34,15 @@ namespace Normal2048.Models
         {
             return _cells[row, column];
         }
+        public Cell GetPrevious(int row, int column)
+        {
+            return _previous[row, column];
+        }
+        public void SetPrevious(Cell[,] previous)
+        {
+            _previous = previous;
+        }
+
         public Cell[,] Cells => _cells;
 
         public Field(int size)
@@ -61,15 +68,11 @@ namespace Normal2048.Models
             foreach (var cell in _cells)
             {
                 if (cell.IsEmpty())
-                {
                     emptyCells++;
-                }
             }
 
             if (emptyCells == 0)
-            {
                 return;
-            }
 
             int value = _random.Next(0, 10) == 0 ? 4 : 2;
             int index = _random.Next(0, emptyCells);
@@ -91,7 +94,7 @@ namespace Normal2048.Models
             }
         }
 
-        public bool Move(Direction direction /*, bool generateNewTiles = true*/)
+        public bool Move(Direction direction)
         {
             bool moved = false;
 
@@ -158,9 +161,7 @@ namespace Normal2048.Models
             }
 
             if (moved)
-            {
                 AddRandomValue();
-            }
 
             return moved;
 
@@ -184,11 +185,8 @@ namespace Normal2048.Models
             {
                 for (int column = 0; column < Size; column++)
                 {
-                    if (state1[row, column].Value != state2[row, column].Value ||
-                        state1[row, column].IsOccupied != state2[row, column].IsOccupied)
-                    {
+                    if (state1[row, column].Value != state2[row, column].Value ||state1[row, column].IsOccupied != state2[row, column].IsOccupied)
                         return false;
-                    }
                 }
             }
 
@@ -266,6 +264,19 @@ namespace Normal2048.Models
             }
         }
 
+
+        public bool CompareFields(Cell[,] _cells, Cell[,] _previous)
+        {
+            for (int row = 0; row < Size; row++)
+            {
+                for (int column = 0; column < Size; column++)
+                {
+                    if (_cells[row, column].Value != _previous[row, column].Value)
+                        return false;
+                }
+            }
+            return true;
+        }
         public bool IsGameOver()
         {
 
@@ -326,6 +337,7 @@ namespace Normal2048.Models
                     if (field.Move(direction))
                     {
 
+                            
 
                         int recursiveScore = CalculateScore(field, 0); 
 
@@ -334,7 +346,7 @@ namespace Normal2048.Models
                             bestScore = recursiveScore;
                             bestMove = direction;
                         }
-
+                       
                         field.ReturnLastMove(originalState);
                     }
                 }
@@ -346,6 +358,7 @@ namespace Normal2048.Models
 
         private int CalculateScore(Field field, int depth)
         {
+            Cell[,] originalState = field.CopyFieldState();
             if (depth == 0 || field.IsGameOver())
             {
                 return ScoreFunction(field);
@@ -361,6 +374,7 @@ namespace Normal2048.Models
                     int currentScore = clonedField.Score;
                     if (clonedField.Move(direction))
                     {
+                       
 
                         int recursiveScore = CalculateScore(clonedField, depth - 1);
 
@@ -368,17 +382,18 @@ namespace Normal2048.Models
                         {
                             bestScore = recursiveScore;
                         }
-
-                        clonedField.ReturnLastMove(field.Cells);
-
+                        
                     }
                     clonedField.Score = currentScore;
-                    clonedField.ReturnLastMove(field.Cells); 
+                    clonedField.ReturnLastMove(originalState);
                 }
             }
 
             return bestScore;
         }
+
+       
+
         private int ScoreFunction(Field field)
         {
             int score = 0;
@@ -483,49 +498,9 @@ namespace Normal2048.Models
 
                     if (currentTile != null)
                     {
-                        bool isLargestInRow = true;
-                        for (int i = col ; i < field.Size; i++)
-                        {
-                            Cell nextTile = _cells[row, i];
-                            if (nextTile != null && nextTile.Value > currentTile.Value)
-                            {
-                                isLargestInRow = false;
-                                break;
-                            }
-                        }
-                        bool isLargestInColumn = true;
-                        for (int i = row; i < field.Size; i++)
-                        {
-                            Cell nextTile = _cells[i, col];
-                            if (nextTile != null && nextTile.Value > currentTile.Value)
-                            {
-                                isLargestInColumn = false;
-                                break;
-                            }
-                        }
+                        int positionScore = (field.Size - row - 1) + (field.Size - col - 1);
 
-
-                        bool isSequentialInRow = true;
-                        for (int i = col - 1; i >= 0; i--)
-                        {
-                            Cell prevTile = _cells[row, i];
-                            if (prevTile != null && prevTile.Value != currentTile.Value - 1)
-                            {
-                                isSequentialInRow = false;
-                                break;
-                            }
-                        }
-                        
-
-
-                        if (isLargestInRow && isSequentialInRow && isLargestInColumn)
-                        {
-                            score += 8*currentTile.Value;
-                        }
-                        else if (isLargestInRow && isSequentialInRow || isSequentialInRow && isLargestInColumn)
-                        {
-                            score += 4 * currentTile.Value;
-                        }
+                        score += positionScore * currentTile.Value;
                     }
                 }
             }
@@ -556,6 +531,18 @@ namespace Normal2048.Models
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public void ReturnLastMove(Func<int, int, Cell> getPrevious)
+        {
+            for (int row = 0; row < Size; row++)
+            {
+                for (int column = 0; column < Size; column++)
+                {
+                    _cells[row, column].Value = _previous[row, column].Value;
+                    _cells[row, column].IsOccupied = _previous[row, column].IsOccupied;
+                }
+            }
         }
     }
 }

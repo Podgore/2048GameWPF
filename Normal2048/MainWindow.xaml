@@ -26,15 +26,12 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
         <Grid x:Name="ButtonGrid" Grid.Row="0">
-            <Button Width="100" Height="40" Content="Solve" HorizontalAlignment="Center" VerticalAlignment="Bottom" Click="BotSolve_Click" Margin="38,183,37,82"/>
-            <Button Width="100" Height="40" Content="Return" HorizontalAlignment="Center" VerticalAlignment="Top" Click="UndoMove_Click" Margin="0,122,0,0"/>
             <TextBlock x:Name="ScoreTextBlock" Text="Score: 0" FontSize="24" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" />
-            <Button Width="100" Height="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,10,0,20" Click="NewGame_Click" Background="WhiteSmoke">
-                <StackPanel Orientation="Horizontal">
-                    <Image Source = "button.png" Width="20" Height="20" />
-                    <TextBlock Text="New Game" />
-                </StackPanel>
-            </Button>
+
+            <Button Width="100" Height="40" Content="Solve" HorizontalAlignment="Center" VerticalAlignment="Top" Click="BotSolve_Click" Margin="0,100,0,0" Background="WhiteSmoke"/>
+            <Button Width="100" Height="40" Content="Return" HorizontalAlignment="Center" VerticalAlignment="Top" Click="UndoMove_Click" Margin="0,175,0,0" Background="WhiteSmoke"/>
+            <Button Width="100" Height="40" Content="New Game" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,250,0,0" Click="NewGame_Click" Background="WhiteSmoke"/>
+
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>

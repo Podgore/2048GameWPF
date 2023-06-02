@@ -23,9 +23,9 @@ namespace Normal2048
 
     public partial class MainWindow : Window
     {
-        private /*readonly*/ Field _field;
-        private /*readonly*/ List<Grid> _grids;
-        private /*readonly*/ Dictionary<Cell, TextBlock?> _cellTextBlockMap = new Dictionary<Cell, TextBlock?>();
+        private Field _field;
+        private List<Grid> _grids;
+        private Dictionary<Cell, TextBlock?> _cellTextBlockMap = new Dictionary<Cell, TextBlock?>();
         private Dictionary<Cell, Rectangle> _cellRectangleMap = new Dictionary<Cell, Rectangle>(); 
 
         public MainWindow()
@@ -82,19 +82,15 @@ namespace Normal2048
 
             if (direction != Direction.None)
             {
-                _field._previous = _field.CopyFieldState();
+                _field.SetPrevious(_field.CopyFieldState());
                 _field.Move(direction);               
                 if (_field.IsGameOver())
                 {
                     var customMessageBox = new CustomMessageBox("You lost");
                     if (customMessageBox.ShowDialog() == true)
-                    {
                         NewGame_Click(null, null);
-                    }
                     else
-                    {
                         Close_Click(null, null);
-                    }
                 }
             }
         }
@@ -174,9 +170,7 @@ namespace Normal2048
             };
 
             if (cell.Value != 0)
-            {
                 element.Text = cell.Value.ToString();
-            }
 
             Grid.SetRow(element, cell.Row);
             Grid.SetColumn(element, cell.Column);
@@ -190,8 +184,6 @@ namespace Normal2048
 
         private void NewGame_Click(object? sender, RoutedEventArgs? e)
         {
-
-            //NewGame();
             string exePath = Environment.ProcessPath!;
 
             System.Diagnostics.Process.Start(exePath);
@@ -204,8 +196,10 @@ namespace Normal2048
 
         private void UndoMove_Click(object sender, RoutedEventArgs e)
         {
-            _field.ReturnLastMove(_field._previous);
-
+            if (_field.GetPrevious != null)
+                _field.ReturnLastMove(_field.GetPrevious);
+            else if (_field.GetPrevious == null)
+                MessageBox.Show("You can't do that recently");
         }
         private async void BotSolve_Click(object sender, RoutedEventArgs e)
         {
@@ -215,7 +209,7 @@ namespace Normal2048
                 var bestMove = _field.FindBestMove(_field);
                 _field.Move(bestMove);
 
-                await Task.Delay(0);
+                await Task.Delay(100);
             }
             
         }
