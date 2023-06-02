@@ -1,25 +1,10 @@
-﻿using System.Windows;
-using System.Windows.Input;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Shapes;
-using System.Reflection;
-using System.Windows.Ink;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System;
-using System.Windows.Media.Animation;
-using Normal2048.Models;
-using System.Linq;
 using System.ComponentModel;
-using System.Data.Common;
-using System.Xml.Linq;
 using System.Collections;
-using static System.Net.Mime.MediaTypeNames;
 using System.Runtime.CompilerServices;
-using System.Drawing;
-using System.Security.Policy;
-using System.Windows.Documents;
-using System.Threading.Tasks;
+using Normal2048.Helper;
+using System.Linq;
 
 namespace Normal2048.Models
 {
@@ -106,7 +91,7 @@ namespace Normal2048.Models
             }
         }
 
-        public bool Move(Direction direction)
+        public bool Move(Direction direction /*, bool generateNewTiles = true*/)
         {
             bool moved = false;
 
@@ -209,7 +194,7 @@ namespace Normal2048.Models
 
             return true;
         }
-       
+
         public Cell[,] CopyFieldState()
         {
             Cell[,] copy = new Cell[Size, Size];
@@ -232,18 +217,18 @@ namespace Normal2048.Models
             if (source.IsEmpty())
                 return false;
 
-           
+
 
             if (target.IsEmpty())
             {
-                
+
                 MoveFreely(source, target);
                 return true;
             }
 
             if (source.Value == target.Value && !target.IsEmpty())
             {
-                
+
                 Merge(source, target);
                 return true;
             }
@@ -269,7 +254,7 @@ namespace Normal2048.Models
             Score += target.Value;
 
         }
-        public void ReturnLastMove(Cell[,]_previous)
+        public void ReturnLastMove(Cell[,] _previous)
         {
             for (int row = 0; row < Size; row++)
             {
@@ -283,7 +268,7 @@ namespace Normal2048.Models
 
         public bool IsGameOver()
         {
-            
+
             int emptyCells = 0;
             foreach (var cell in _cells)
             {
@@ -296,7 +281,7 @@ namespace Normal2048.Models
                     }
                 }
             }
-            if(emptyCells == 0)
+            if (emptyCells == 0)
             {
                 for (int row = 0; row < Size; row++)
                 {
@@ -342,7 +327,7 @@ namespace Normal2048.Models
                     {
 
 
-                        int recursiveScore = CalculateScore(field, 3); // Рекурсивно оцениваем счет на 3 хода вперед
+                        int recursiveScore = CalculateScore(field, 0); 
 
                         if (recursiveScore > bestScore)
                         {
@@ -351,7 +336,6 @@ namespace Normal2048.Models
                         }
 
                         field.ReturnLastMove(originalState);
-                        // Возвращаем поле в исходное состояние
                     }
                 }
             }
@@ -364,7 +348,6 @@ namespace Normal2048.Models
         {
             if (depth == 0 || field.IsGameOver())
             {
-                // Оцените текущее состояние игрового поля и верните счет
                 return ScoreFunction(field);
             }
 
@@ -378,7 +361,6 @@ namespace Normal2048.Models
                     int currentScore = clonedField.Score;
                     if (clonedField.Move(direction))
                     {
-                        // Сохраняем текущий счет
 
                         int recursiveScore = CalculateScore(clonedField, depth - 1);
 
@@ -391,7 +373,7 @@ namespace Normal2048.Models
 
                     }
                     clonedField.Score = currentScore;
-                    clonedField.ReturnLastMove(field.Cells); // Возвращаем поле в исходное состояние после рекурсивного вызова
+                    clonedField.ReturnLastMove(field.Cells); 
                 }
             }
 
@@ -401,13 +383,10 @@ namespace Normal2048.Models
         {
             int score = 0;
 
-            // Оценка на основе рядом расположенных одинаковых плиток
             score += ScoreBasedOnAdjacentTiles(field);
 
-            // Оценка на основе общего счета игры
-            score += field.Score;
+            score += field.Score ;
 
-            // Оценка на основе расположения больших плиток
             score += ScoreBasedOnTilePositions(field);
 
             return score;
@@ -425,7 +404,6 @@ namespace Normal2048.Models
 
                     if (currentTile != null)
                     {
-                        // Проверяем плитки сверху, снизу, слева и справа
                         Cell? topTile = null;
                         if (row - 1 >= 0)
                         {
@@ -433,7 +411,6 @@ namespace Normal2048.Models
                         }
                         else
                         {
-                            // Если текущая плитка на верхнем краю поля, проверяем плитку за пустой плиткой
                             topTile = _cells[row + 1, col];
                         }
 
@@ -444,7 +421,6 @@ namespace Normal2048.Models
                         }
                         else
                         {
-                            // Если текущая плитка на нижнем краю поля, проверяем плитку за пустой плиткой
                             bottomTile = _cells[row - 1, col];
                         }
 
@@ -455,7 +431,6 @@ namespace Normal2048.Models
                         }
                         else
                         {
-                            // Если текущая плитка на левом краю поля, проверяем плитку за пустой плиткой
                             leftTile = _cells[row, col + 1];
                         }
 
@@ -466,26 +441,25 @@ namespace Normal2048.Models
                         }
                         else
                         {
-                            // Если текущая плитка на правом краю поля, проверяем плитку за пустой плиткой
                             rightTile = _cells[row, col - 1];
                         }
 
-                        if (topTile != null && topTile.Value == currentTile.Value)
+                        if (topTile != null && topTile.Value == currentTile.Value && currentTile.Value >= 8)
                         {
                             score += currentTile.Value;
                         }
 
-                        if (bottomTile != null && bottomTile.Value == currentTile.Value)
+                        if (bottomTile != null && bottomTile.Value == currentTile.Value && currentTile.Value >= 8)
                         {
                             score += currentTile.Value;
                         }
 
-                        if (leftTile != null && leftTile.Value == currentTile.Value)
+                        if (leftTile != null && leftTile.Value == currentTile.Value && currentTile.Value >= 8)
                         {
                             score += currentTile.Value;
                         }
 
-                        if (rightTile != null && rightTile.Value == currentTile.Value)
+                        if (rightTile != null && rightTile.Value == currentTile.Value && currentTile.Value >= 8)
                         {
                             score += currentTile.Value;
                         }
@@ -501,8 +475,6 @@ namespace Normal2048.Models
         {
             int score = 0;
 
-            int largestTileValue = 0;
-
             for (int row = 0; row < field.Size; row++)
             {
                 for (int col = 0; col < field.Size; col++)
@@ -511,35 +483,49 @@ namespace Normal2048.Models
 
                     if (currentTile != null)
                     {
-                        if (currentTile.Value > largestTileValue)
+                        bool isLargestInRow = true;
+                        for (int i = col ; i < field.Size; i++)
                         {
-                            largestTileValue = currentTile.Value;
+                            Cell nextTile = _cells[row, i];
+                            if (nextTile != null && nextTile.Value > currentTile.Value)
+                            {
+                                isLargestInRow = false;
+                                break;
+                            }
                         }
-                    }
-                }
-            }
-
-            for (int row = 0; row < field.Size; row++)
-            {
-                for (int col = 0; col < field.Size; col++)
-                {
-                    Cell currentTile = _cells[row, col];
-
-                    if (currentTile != null)
-                    {
-                        int positionBonus = 0;
-
-                        if (currentTile.Value == largestTileValue)
+                        bool isLargestInColumn = true;
+                        for (int i = row; i < field.Size; i++)
                         {
-                            positionBonus = (field.Size - row) * field.Size + (field.Size - col); // Больший бонус для самой большой плитки в верхнем левом углу
-                        }
-                        else
-                        {
-                            int distanceFromLargestTile = Math.Abs(row - (field.Size - 1)) + Math.Abs(col - (field.Size - 1));
-                            positionBonus = distanceFromLargestTile * field.Size + (field.Size - col); // Бонус по расстоянию от самой большой плитки
+                            Cell nextTile = _cells[i, col];
+                            if (nextTile != null && nextTile.Value > currentTile.Value)
+                            {
+                                isLargestInColumn = false;
+                                break;
+                            }
                         }
 
-                        score += currentTile.Value + positionBonus;
+
+                        bool isSequentialInRow = true;
+                        for (int i = col - 1; i >= 0; i--)
+                        {
+                            Cell prevTile = _cells[row, i];
+                            if (prevTile != null && prevTile.Value != currentTile.Value - 1)
+                            {
+                                isSequentialInRow = false;
+                                break;
+                            }
+                        }
+                        
+
+
+                        if (isLargestInRow && isSequentialInRow && isLargestInColumn)
+                        {
+                            score += 8*currentTile.Value;
+                        }
+                        else if (isLargestInRow && isSequentialInRow || isSequentialInRow && isLargestInColumn)
+                        {
+                            score += 4 * currentTile.Value;
+                        }
                     }
                 }
             }

@@ -31,6 +31,11 @@ namespace Normal2048
         public MainWindow()
         {
             InitializeComponent();
+            NewGame();
+        }
+
+        private void NewGame()
+        {
             _field = new Field(4);
             _grids = GameGrid.Children
                 .OfType<Grid>()
@@ -43,7 +48,7 @@ namespace Normal2048
             var grid = _grids[i];
             for (int row = 0; row < _field.Size; row++)
             {
-                
+
 
                 for (int column = 0; column < _field.Size; column++)
                 {
@@ -185,6 +190,8 @@ namespace Normal2048
 
         private void NewGame_Click(object? sender, RoutedEventArgs? e)
         {
+
+            //NewGame();
             string exePath = Environment.ProcessPath!;
 
             System.Diagnostics.Process.Start(exePath);
@@ -204,9 +211,11 @@ namespace Normal2048
         {
             while (!_field.IsGameOver())
             {
+                
                 var bestMove = _field.FindBestMove(_field);
                 _field.Move(bestMove);
-                await Task.Delay(1);
+
+                await Task.Delay(0);
             }
             
         }
