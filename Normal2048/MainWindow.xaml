@@ -27,8 +27,10 @@
         </Grid.RowDefinitions>
         <Grid x:Name="ButtonGrid" Grid.Row="0">
             <TextBlock x:Name="ScoreTextBlock" Text="Score: 0" FontSize="24" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" />
-
             <Button Width="100" Height="40" Content="Solve" HorizontalAlignment="Center" VerticalAlignment="Top" Click="BotSolve_Click" Margin="0,100,0,0" Background="WhiteSmoke"/>
+            <Button Width="100" Height="40" Content="LoadGame" HorizontalAlignment="Center" VerticalAlignment="Top" Click="Load_Click" Margin="0,100,0,0" Background="WhiteSmoke" Grid.Column="1"/>
+            <Button Width="100" Height="40" Content="SaveGame" HorizontalAlignment="Center" VerticalAlignment="Top" Click="Save_Click" Margin="0,175,0,0" Background="WhiteSmoke" Grid.Column="1"/>
+
             <Button Width="100" Height="40" Content="Return" HorizontalAlignment="Center" VerticalAlignment="Top" Click="UndoMove_Click" Margin="0,175,0,0" Background="WhiteSmoke"/>
             <Button Width="100" Height="40" Content="New Game" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,250,0,0" Click="NewGame_Click" Background="WhiteSmoke"/>
 

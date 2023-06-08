@@ -25,6 +25,7 @@ namespace Normal2048
     {
         private Field _field;
         private List<Grid> _grids;
+        private int previousScore;
         private Dictionary<Cell, TextBlock?> _cellTextBlockMap = new Dictionary<Cell, TextBlock?>();
         private Dictionary<Cell, Rectangle> _cellRectangleMap = new Dictionary<Cell, Rectangle>(); 
 
@@ -83,6 +84,7 @@ namespace Normal2048
             if (direction != Direction.None)
             {
                 _field.SetPrevious(_field.CopyFieldState());
+                previousScore = _field.Score;
                 _field.Move(direction);               
                 if (_field.IsGameOver())
                 {
@@ -194,13 +196,31 @@ namespace Normal2048
             System.Windows.Application.Current.Shutdown();
         }
 
+
+        private void Load_Click(object? sender, RoutedEventArgs? e)
+        {
+            _field.LoadGame("safegame.json");
+        }
+        private void Save_Click(object? sender, RoutedEventArgs? e)
+        {
+            _field.SaveGame("safegame.json");
+        }
+
+
         private void UndoMove_Click(object sender, RoutedEventArgs e)
         {
-            if (_field.GetPrevious != null)
-                _field.ReturnLastMove(_field.GetPrevious);
-            else if (_field.GetPrevious == null)
+            
+            if (_field.GetPrevious == null)
                 MessageBox.Show("You can't do that recently");
+            else if (_field.GetPrevious != null)
+            {
+                _field.ReturnLastMove(_field.GetPrevious);
+                _field.Score = previousScore;
+                CalculateScore();
+            }
         }
+       
+
         private async void BotSolve_Click(object sender, RoutedEventArgs e)
         {
             while (!_field.IsGameOver())
@@ -209,9 +229,11 @@ namespace Normal2048
                 var bestMove = _field.FindBestMove(_field);
                 _field.Move(bestMove);
 
-                await Task.Delay(100);
+                await Task.Delay(10);
             }
             
         }
+
+        
     }
 }

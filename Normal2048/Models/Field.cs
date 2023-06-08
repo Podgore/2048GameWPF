@@ -4,6 +4,9 @@ using System.ComponentModel;
 using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Linq;
+using System.Xml;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace Normal2048.Models
 {
@@ -11,10 +14,9 @@ namespace Normal2048.Models
     {
         private readonly Random _random = new();
 
-        private Cell[,] _cells;
+        public Cell[,] _cells;
         private int score;
         private Cell[,] _previous;
-
 
         public int Size { get; set; }
 
@@ -42,9 +44,7 @@ namespace Normal2048.Models
         {
             _previous = previous;
         }
-
-        public Cell[,] Cells => _cells;
-
+        
         public Field(int size)
         {
             Size = size;
@@ -185,7 +185,7 @@ namespace Normal2048.Models
             {
                 for (int column = 0; column < Size; column++)
                 {
-                    if (state1[row, column].Value != state2[row, column].Value ||state1[row, column].IsOccupied != state2[row, column].IsOccupied)
+                    if (state1[row, column].Value != state2[row, column].Value || state1[row, column].IsOccupied != state2[row, column].IsOccupied)
                         return false;
                 }
             }
@@ -263,20 +263,19 @@ namespace Normal2048.Models
                 }
             }
         }
-
-
-        public bool CompareFields(Cell[,] _cells, Cell[,] _previous)
+        public void ReturnLastMove(Func<int, int, Cell> getPrevious)
         {
             for (int row = 0; row < Size; row++)
             {
                 for (int column = 0; column < Size; column++)
                 {
-                    if (_cells[row, column].Value != _previous[row, column].Value)
-                        return false;
+                    _cells[row, column].Value = _previous[row, column].Value;
+                    _cells[row, column].IsOccupied = _previous[row, column].IsOccupied;
                 }
             }
-            return true;
         }
+
+
         public bool IsGameOver()
         {
 
@@ -337,16 +336,16 @@ namespace Normal2048.Models
                     if (field.Move(direction))
                     {
 
-                            
 
-                        int recursiveScore = CalculateScore(field, 0); 
+
+                        int recursiveScore = CalculateScore(field, 0);
 
                         if (recursiveScore > bestScore)
                         {
                             bestScore = recursiveScore;
                             bestMove = direction;
                         }
-                       
+
                         field.ReturnLastMove(originalState);
                     }
                 }
@@ -374,7 +373,7 @@ namespace Normal2048.Models
                     int currentScore = clonedField.Score;
                     if (clonedField.Move(direction))
                     {
-                       
+
 
                         int recursiveScore = CalculateScore(clonedField, depth - 1);
 
@@ -382,7 +381,7 @@ namespace Normal2048.Models
                         {
                             bestScore = recursiveScore;
                         }
-                        
+
                     }
                     clonedField.Score = currentScore;
                     clonedField.ReturnLastMove(originalState);
@@ -392,7 +391,7 @@ namespace Normal2048.Models
             return bestScore;
         }
 
-       
+
 
         private int ScoreFunction(Field field)
         {
@@ -400,7 +399,7 @@ namespace Normal2048.Models
 
             score += ScoreBasedOnAdjacentTiles(field);
 
-            score += field.Score ;
+            score += field.Score;
 
             score += ScoreBasedOnTilePositions(field);
 
@@ -507,8 +506,25 @@ namespace Normal2048.Models
 
             return score;
         }
-
-
+        public void SaveGame(string filename)
+        {
+            string json = JsonConvert.SerializeObject(_cells);
+            File.WriteAllText(filename, json);
+        }
+        public void LoadGame(string filename)
+        { 
+            string json = File.ReadAllText(filename);
+            var loadcells = JsonConvert.DeserializeObject<Cell[,]> (json);
+            for (int row = 0; row < Size; row++)
+            {
+                for (int column = 0; column < Size; column++)
+                {
+                    _cells[row, column].Value = loadcells[row, column].Value;
+                    _cells[row, column].IsOccupied = loadcells[row, column].IsOccupied;
+                }
+            }
+        }
+        
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -533,17 +549,7 @@ namespace Normal2048.Models
             return GetEnumerator();
         }
 
-        public void ReturnLastMove(Func<int, int, Cell> getPrevious)
-        {
-            for (int row = 0; row < Size; row++)
-            {
-                for (int column = 0; column < Size; column++)
-                {
-                    _cells[row, column].Value = _previous[row, column].Value;
-                    _cells[row, column].IsOccupied = _previous[row, column].IsOccupied;
-                }
-            }
-        }
+        
     }
 }
 
